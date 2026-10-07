@@ -1,6 +1,6 @@
 # Snake Evolution
 
-##Classic Arcade Game Clone
+Classic Arcade Game Clone
 
 Snake Evolution is a modern web-based version of the classic Snake arcade game, developed as part of our hackathon project for  
 
