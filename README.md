@@ -41,7 +41,7 @@ The game includes:
 - Self-collision detection
 - Obstacle collision detection
 
-### Difficulty Levels
+## Difficulty Levels
 
 | Difficulty | Speed |
 |---|---|
@@ -49,7 +49,7 @@ The game includes:
 | 🟡 Medium | Moderate |
 | 🔴 Hard | Fast |
 
-###  Level Progression
+### Level Progression
 
 The game becomes more challenging as the player's score increases.
 
@@ -58,7 +58,7 @@ The game becomes more challenging as the player's score increases.
 - Level 3 → 8 obstacles
 - Level 4 → 11 obstacles.
 
-###  Sound Effects
+### Sound Effects
 
 The game provides sound feedback for:
 
@@ -68,13 +68,13 @@ The game provides sound feedback for:
 - Pausing
 - Game over
 
-###  Leaderboard
+### Leaderboard
 
 Player scores can be submitted to the backend and the top 5 scores are maintained.
 
 ---
 
-##  Controls
+## Controls
 
 | Key | Action |
 |---|---|
@@ -86,7 +86,7 @@ Player scores can be submitted to the backend and the top 5 scores are maintaine
 
 ---
 
-## 🛠️ Technologies Used
+## Technologies Used
 
 ### Frontend
 - HTML
@@ -95,12 +95,12 @@ Player scores can be submitted to the backend and the top 5 scores are maintaine
 - HTML5 Canvas
 - Web Audio API
 
-### Backend
+###Backend
 - Node.js
 - Express.js
 - CORS
 
-### Development Tools
+###Development Tools
 - Visual Studio Code
 - Git
 - GitHub
@@ -108,7 +108,7 @@ Player scores can be submitted to the backend and the top 5 scores are maintaine
 
 ---
 
-## Project Structure
+##Project Structure
 
 ```text
 PS14-Classic-Arcade-Game/
