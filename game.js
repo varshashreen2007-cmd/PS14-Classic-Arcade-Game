@@ -16,7 +16,7 @@ const gameOverRestart = document.getElementById("gameOverRestart");
 const gridSize = 20;
 const tileCount = canvas.width / gridSize;
 
-let snake;
+let snake = [];
 let food;
 
 let direction;
@@ -35,32 +35,8 @@ let gameLoop;
 
 let speed = 120;
 
-// Backend URL
-const BACKEND_URL = "http://localhost:3000";
-
-
-// ================================
-// INITIAL DISPLAY
-// ================================
-
 highScoreDisplay.textContent = highScore;
 levelDisplay.textContent = level;
-
-
-// ================================
-// PLAYER NAME
-// ================================
-
-function getPlayerName() {
-
-    let name = prompt("Enter your player name:");
-
-    if (!name || name.trim() === "") {
-        name = "Player";
-    }
-
-    return name.trim();
-}
 
 
 // ================================
@@ -139,6 +115,7 @@ function createFood() {
 
 function drawGame() {
 
+    // Clear canvas
     ctx.fillStyle = "#000000";
 
     ctx.fillRect(
@@ -149,7 +126,7 @@ function drawGame() {
     );
 
 
-    // Food
+    // Draw food
     ctx.fillStyle = "#ef4444";
 
     ctx.beginPath();
@@ -165,7 +142,7 @@ function drawGame() {
     ctx.fill();
 
 
-    // Snake
+    // Draw snake
     snake.forEach((part, index) => {
 
         if (index === 0) {
@@ -180,7 +157,6 @@ function drawGame() {
             gridSize - 2,
             gridSize - 2
         );
-
     });
 }
 
@@ -196,6 +172,7 @@ function updateGame() {
     }
 
     direction = nextDirection;
+
 
     const head = {
         x: snake[0].x + direction.x,
@@ -227,10 +204,10 @@ function updateGame() {
             endGame();
             return;
         }
-
     }
 
 
+    // Add new head
     snake.unshift(head);
 
 
@@ -266,8 +243,8 @@ function updateGame() {
 
     } else {
 
+        // Remove tail
         snake.pop();
-
     }
 
 
@@ -276,7 +253,7 @@ function updateGame() {
 
 
 // ================================
-// DIFFICULTY
+// DIFFICULTY SYSTEM
 // ================================
 
 function increaseDifficulty() {
@@ -304,19 +281,19 @@ function increaseDifficulty() {
 
         newSpeed = 55;
         newLevel = 4;
-
     }
 
 
+    // Update level
     if (newLevel !== level) {
 
         level = newLevel;
 
         levelDisplay.textContent = level;
-
     }
 
 
+    // Update speed
     if (newSpeed !== speed) {
 
         speed = newSpeed;
@@ -325,110 +302,12 @@ function increaseDifficulty() {
 
         gameLoop =
             setInterval(updateGame, speed);
-
     }
-
 }
 
 
 // ================================
-// SEND SCORE TO BACKEND
-// ================================
-
-async function sendScoreToBackend() {
-
-    const playerName =
-        getPlayerName();
-
-    try {
-
-        const response =
-            await fetch(
-                `${BACKEND_URL}/score`,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        name: playerName,
-                        score: score,
-                        level: level
-                    })
-                }
-            );
-
-
-        const data =
-            await response.json();
-
-
-        console.log(
-            "Backend response:",
-            data
-        );
-
-
-        if (data.success) {
-
-            console.log(
-                "Score saved successfully!"
-            );
-
-            showLeaderboard(
-                data.leaderboard
-            );
-
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Could not connect to backend:",
-            error
-        );
-
-        alert(
-            "Game over! Score could not be sent to the backend."
-        );
-
-    }
-
-}
-
-
-// ================================
-// SHOW LEADERBOARD
-// ================================
-
-function showLeaderboard(leaderboard) {
-
-    let text =
-        "🏆 TOP 5 LEADERBOARD\n\n";
-
-
-    leaderboard.forEach(
-        (player, index) => {
-
-            text +=
-                `${index + 1}. ${player.name} - ${player.score} points (Level ${player.level})\n`;
-
-        }
-    );
-
-
-    console.log(text);
-
-    alert(text);
-
-}
-
-
-// ================================
-// GAME OVER
+// GAME OVER + BACKEND CONNECTION
 // ================================
 
 function endGame() {
@@ -442,9 +321,41 @@ function endGame() {
     gameOverScreen.style.display = "block";
 
 
-    // Send score to backend
-    sendScoreToBackend();
+    // Send score and level to backend
+    fetch("http://localhost:3000/score", {
 
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            score: score,
+            level: level
+        })
+
+    })
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        console.log(
+            "Backend response:",
+            data
+        );
+
+    })
+
+    .catch(error => {
+
+        console.error(
+            "Backend error:",
+            error
+        );
+
+    });
 }
 
 
@@ -458,22 +369,17 @@ function togglePause() {
         return;
     }
 
-
     gamePaused = !gamePaused;
 
 
     if (gamePaused) {
 
-        pauseBtn.textContent =
-            "Resume";
+        pauseBtn.textContent = "Resume";
 
     } else {
 
-        pauseBtn.textContent =
-            "Pause";
-
+        pauseBtn.textContent = "Pause";
     }
-
 }
 
 
@@ -486,7 +392,6 @@ function restartGame() {
     clearInterval(gameLoop);
 
     startGame();
-
 }
 
 
@@ -513,7 +418,6 @@ document.addEventListener(
                         x: 0,
                         y: -1
                     };
-
                 }
 
                 event.preventDefault();
@@ -529,7 +433,6 @@ document.addEventListener(
                         x: 0,
                         y: 1
                     };
-
                 }
 
                 event.preventDefault();
@@ -545,7 +448,6 @@ document.addEventListener(
                         x: -1,
                         y: 0
                     };
-
                 }
 
                 event.preventDefault();
@@ -561,7 +463,6 @@ document.addEventListener(
                         x: 1,
                         y: 0
                     };
-
                 }
 
                 event.preventDefault();
@@ -576,7 +477,6 @@ document.addEventListener(
                 event.preventDefault();
 
                 break;
-
         }
 
     }
