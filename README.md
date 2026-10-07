@@ -1,8 +1,8 @@
-# 🐍 Snake Evolution
+#  Snake Evolution
 
 ## Classic Arcade Game Clone
 
-Snake Evolution is a modern web-based version of the classic Snake arcade game, developed as part of our hackathon project for **Problem Statement 14 – Classic Arcade Game**.
+Snake Evolution is a modern web-based version of the classic Snake arcade game, developed as part of our hackathon project for  
 
 The game combines the classic Snake gameplay with multiple difficulty levels, progressive levels, obstacles, sound effects, scoring, and a leaderboard system.
 
@@ -79,10 +79,10 @@ Player scores can be submitted to the backend and the top 5 scores are maintaine
 
 | Key | Action |
 |---|---|
-| ⬆️ Arrow Up | Move Up |
-| ⬇️ Arrow Down | Move Down |
-| ⬅️ Arrow Left | Move Left |
-| ➡️ Arrow Right | Move Right |
+|  Arrow Up | Move Up |
+|  Arrow Down | Move Down |
+|  Arrow Left | Move Left |
+|  Arrow Right | Move Right |
 | Space | Pause / Resume |
 
 ---
