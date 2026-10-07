@@ -11,7 +11,6 @@ The game combines the classic Snake gameplay with multiple difficulty levels, pr
 ##  Problem Statement
 
 Develop a clone of a classic arcade game that provides an engaging and interactive gaming experience while demonstrating programming, frontend, backend, and game-development concepts.
-
 ---
 
 ##  Our Solution
