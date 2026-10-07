@@ -26,7 +26,7 @@ The game includes:
 - Sound effects
 - Pause and restart functionality
 - Game-over detection
-- Backend leaderboard
+- Backend leaderboard.
 
 ---
 
