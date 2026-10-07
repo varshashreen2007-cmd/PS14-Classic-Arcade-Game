@@ -13,13 +13,18 @@ const gameOverScreen = document.getElementById("gameOver");
 const finalScore = document.getElementById("finalScore");
 const gameOverRestart = document.getElementById("gameOverRestart");
 
+const easyBtn = document.getElementById("easyBtn");
+const mediumBtn = document.getElementById("mediumBtn");
+const hardBtn = document.getElementById("hardBtn");
+
 const gridSize = 20;
 const tileCount = canvas.width / gridSize;
 
 let snake = [];
-let food;
-let direction;
-let nextDirection;
+let food = null;
+
+let direction = { x: 1, y: 0 };
+let nextDirection = { x: 1, y: 0 };
 
 let score = 0;
 let level = 1;
@@ -27,11 +32,76 @@ let highScore = Number(localStorage.getItem("snakeHighScore")) || 0;
 
 let gameRunning = false;
 let gamePaused = false;
-let gameLoop;
-let speed = 120;
+let gameOver = false;
+let levelTransition = false;
+
+let gameLoop = null;
+let transitionTimer = null;
+
+let difficulty = "easy";
+
+const difficultySettings = {
+    easy: 150,
+    medium: 120,
+    hard: 90
+};
 
 highScoreDisplay.textContent = highScore;
 levelDisplay.textContent = level;
+
+
+// ==========================================
+// DIFFICULTY
+// ==========================================
+
+function selectDifficulty(selectedDifficulty) {
+
+    if (gameRunning) {
+        return;
+    }
+
+    difficulty = selectedDifficulty;
+
+    easyBtn.classList.remove("active");
+    mediumBtn.classList.remove("active");
+    hardBtn.classList.remove("active");
+
+    if (difficulty === "easy") {
+        easyBtn.classList.add("active");
+    }
+
+    if (difficulty === "medium") {
+        mediumBtn.classList.add("active");
+    }
+
+    if (difficulty === "hard") {
+        hardBtn.classList.add("active");
+    }
+}
+
+
+// ==========================================
+// SPEED
+// ==========================================
+
+function getCurrentSpeed() {
+
+    const baseSpeed = difficultySettings[difficulty];
+
+    if (level === 1) {
+        return baseSpeed;
+    }
+
+    if (level === 2) {
+        return Math.round(baseSpeed * 0.82);
+    }
+
+    if (level === 3) {
+        return Math.round(baseSpeed * 0.68);
+    }
+
+    return Math.round(baseSpeed * 0.55);
+}
 
 
 // ==========================================
@@ -39,6 +109,9 @@ levelDisplay.textContent = level;
 // ==========================================
 
 function startGame() {
+
+    clearInterval(gameLoop);
+    clearTimeout(transitionTimer);
 
     snake = [
         { x: 10, y: 10 },
@@ -52,23 +125,25 @@ function startGame() {
 
     score = 0;
     level = 1;
-    speed = 120;
+
+    gameRunning = true;
+    gamePaused = false;
+    gameOver = false;
+    levelTransition = false;
 
     scoreDisplay.textContent = score;
     levelDisplay.textContent = level;
 
+    pauseBtn.textContent = "⏸ Pause";
+
     gameOverScreen.style.display = "none";
-
-    gameRunning = true;
-    gamePaused = false;
-
-    pauseBtn.textContent = "Pause";
 
     createFood();
 
-    clearInterval(gameLoop);
-
-    gameLoop = setInterval(updateGame, speed);
+    gameLoop = setInterval(
+        updateGame,
+        getCurrentSpeed()
+    );
 
     drawGame();
 }
@@ -102,7 +177,7 @@ function createFood() {
 // ROUNDED RECTANGLE
 // ==========================================
 
-function roundedRect(x, y, width, height, radius) {
+function drawRoundedRect(x, y, width, height, radius) {
 
     ctx.beginPath();
 
@@ -127,11 +202,6 @@ function drawSnakeHead(part) {
     const x = part.x * gridSize;
     const y = part.y * gridSize;
 
-    // Glow
-    ctx.shadowColor = "#00ff88";
-    ctx.shadowBlur = 15;
-
-    // Head gradient
     const gradient = ctx.createLinearGradient(
         x,
         y,
@@ -139,13 +209,16 @@ function drawSnakeHead(part) {
         y + gridSize
     );
 
-    gradient.addColorStop(0, "#65ff9a");
-    gradient.addColorStop(0.5, "#19e66f");
-    gradient.addColorStop(1, "#00a844");
+    gradient.addColorStop(0, "#7cffb2");
+    gradient.addColorStop(0.5, "#20e878");
+    gradient.addColorStop(1, "#079447");
 
     ctx.fillStyle = gradient;
 
-    roundedRect(
+    ctx.shadowColor = "#00ff88";
+    ctx.shadowBlur = 14;
+
+    drawRoundedRect(
         x + 1,
         y + 1,
         gridSize - 2,
@@ -155,132 +228,49 @@ function drawSnakeHead(part) {
 
     ctx.shadowBlur = 0;
 
-    // Eye positions
     let eye1;
     let eye2;
 
     if (direction.x === 1) {
 
-        eye1 = {
-            x: x + 14,
-            y: y + 5
-        };
-
-        eye2 = {
-            x: x + 14,
-            y: y + 14
-        };
+        eye1 = { x: x + 14, y: y + 6 };
+        eye2 = { x: x + 14, y: y + 14 };
 
     } else if (direction.x === -1) {
 
-        eye1 = {
-            x: x + 6,
-            y: y + 5
-        };
-
-        eye2 = {
-            x: x + 6,
-            y: y + 14
-        };
+        eye1 = { x: x + 6, y: y + 6 };
+        eye2 = { x: x + 6, y: y + 14 };
 
     } else if (direction.y === -1) {
 
-        eye1 = {
-            x: x + 5,
-            y: y + 6
-        };
-
-        eye2 = {
-            x: x + 14,
-            y: y + 6
-        };
+        eye1 = { x: x + 6, y: y + 6 };
+        eye2 = { x: x + 14, y: y + 6 };
 
     } else {
 
-        eye1 = {
-            x: x + 5,
-            y: y + 14
-        };
-
-        eye2 = {
-            x: x + 14,
-            y: y + 14
-        };
+        eye1 = { x: x + 6, y: y + 14 };
+        eye2 = { x: x + 14, y: y + 14 };
     }
 
-    // White eyes
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "white";
 
     ctx.beginPath();
-    ctx.arc(
-        eye1.x,
-        eye1.y,
-        3,
-        0,
-        Math.PI * 2
-    );
+    ctx.arc(eye1.x, eye1.y, 3, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.beginPath();
-    ctx.arc(
-        eye2.x,
-        eye2.y,
-        3,
-        0,
-        Math.PI * 2
-    );
+    ctx.arc(eye2.x, eye2.y, 3, 0, Math.PI * 2);
     ctx.fill();
 
-    // Pupils
-    ctx.fillStyle = "#111111";
+    ctx.fillStyle = "#111827";
 
     ctx.beginPath();
-    ctx.arc(
-        eye1.x,
-        eye1.y,
-        1.5,
-        0,
-        Math.PI * 2
-    );
+    ctx.arc(eye1.x, eye1.y, 1.5, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.beginPath();
-    ctx.arc(
-        eye2.x,
-        eye2.y,
-        1.5,
-        0,
-        Math.PI * 2
-    );
+    ctx.arc(eye2.x, eye2.y, 1.5, 0, Math.PI * 2);
     ctx.fill();
-
-    // Tongue
-    ctx.strokeStyle = "#ff4d88";
-    ctx.lineWidth = 2;
-
-    if (direction.x === 1) {
-
-        ctx.beginPath();
-
-        ctx.moveTo(x + 19, y + 10);
-        ctx.lineTo(x + 23, y + 10);
-
-        ctx.stroke();
-
-        ctx.beginPath();
-
-        ctx.moveTo(x + 23, y + 10);
-        ctx.lineTo(x + 26, y + 7);
-
-        ctx.stroke();
-
-        ctx.beginPath();
-
-        ctx.moveTo(x + 23, y + 10);
-        ctx.lineTo(x + 26, y + 13);
-
-        ctx.stroke();
-    }
 }
 
 
@@ -288,7 +278,7 @@ function drawSnakeHead(part) {
 // DRAW SNAKE BODY
 // ==========================================
 
-function drawSnakeBody(part, index) {
+function drawSnakeBody(part) {
 
     const x = part.x * gridSize;
     const y = part.y * gridSize;
@@ -300,15 +290,15 @@ function drawSnakeBody(part, index) {
         y + gridSize
     );
 
-    gradient.addColorStop(0, "#32f17e");
+    gradient.addColorStop(0, "#45f58b");
     gradient.addColorStop(1, "#079447");
 
     ctx.fillStyle = gradient;
 
-    ctx.shadowColor = "rgba(0,255,120,0.5)";
-    ctx.shadowBlur = 8;
+    ctx.shadowColor = "rgba(0,255,120,0.45)";
+    ctx.shadowBlur = 7;
 
-    roundedRect(
+    drawRoundedRect(
         x + 2,
         y + 2,
         gridSize - 4,
@@ -318,7 +308,6 @@ function drawSnakeBody(part, index) {
 
     ctx.shadowBlur = 0;
 
-    // Body highlight
     ctx.fillStyle = "rgba(255,255,255,0.18)";
 
     ctx.beginPath();
@@ -336,7 +325,7 @@ function drawSnakeBody(part, index) {
 
 
 // ==========================================
-// DRAW APPLE FOOD
+// DRAW FOOD
 // ==========================================
 
 function drawFood() {
@@ -344,105 +333,39 @@ function drawFood() {
     const centerX = food.x * gridSize + gridSize / 2;
     const centerY = food.y * gridSize + gridSize / 2;
 
-    // Apple glow
     ctx.shadowColor = "#ff1744";
-    ctx.shadowBlur = 20;
+    ctx.shadowBlur = 18;
 
-    // Apple gradient
-    const gradient = ctx.createRadialGradient(
-        centerX - 3,
-        centerY - 4,
-        2,
+    ctx.fillStyle = "#ff1744";
+
+    ctx.beginPath();
+
+    ctx.arc(
         centerX,
         centerY,
-        10
-    );
-
-    gradient.addColorStop(0, "#ffb0c0");
-    gradient.addColorStop(0.3, "#ff4d6d");
-    gradient.addColorStop(0.7, "#e60032");
-    gradient.addColorStop(1, "#9c001f");
-
-    ctx.fillStyle = gradient;
-
-    // Left part of apple
-    ctx.beginPath();
-
-    ctx.arc(
-        centerX - 3,
-        centerY + 1,
-        6,
+        7,
         0,
         Math.PI * 2
-    );
-
-    ctx.fill();
-
-    // Right part of apple
-    ctx.beginPath();
-
-    ctx.arc(
-        centerX + 3,
-        centerY + 1,
-        6,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-    // Bottom of apple
-    ctx.beginPath();
-
-    ctx.moveTo(
-        centerX - 7,
-        centerY + 2
-    );
-
-    ctx.quadraticCurveTo(
-        centerX,
-        centerY + 11,
-        centerX + 7,
-        centerY + 2
     );
 
     ctx.fill();
 
     ctx.shadowBlur = 0;
 
-    // Apple shine
     ctx.fillStyle = "#ffffff";
 
     ctx.beginPath();
 
-    ctx.ellipse(
-        centerX - 4,
+    ctx.arc(
+        centerX - 2,
         centerY - 3,
         2,
-        3,
-        -0.5,
         0,
         Math.PI * 2
     );
 
     ctx.fill();
 
-    // Small second shine
-    ctx.fillStyle = "rgba(255,255,255,0.5)";
-
-    ctx.beginPath();
-
-    ctx.arc(
-        centerX - 1,
-        centerY - 6,
-        1,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-    // Apple stem
     ctx.strokeStyle = "#713c18";
     ctx.lineWidth = 2;
 
@@ -459,41 +382,75 @@ function drawFood() {
     );
 
     ctx.stroke();
+}
 
-    // Green leaf
-    ctx.fillStyle = "#55ff88";
 
-    ctx.beginPath();
+// ==========================================
+// DRAW GAME OVER ON CANVAS
+// ==========================================
 
-    ctx.ellipse(
-        centerX + 5,
-        centerY - 8,
-        4,
-        2,
-        -0.5,
+function drawGameOver() {
+
+    // Dark overlay
+    ctx.fillStyle = "rgba(0, 0, 0, 0.72)";
+
+    ctx.fillRect(
         0,
-        Math.PI * 2
+        0,
+        canvas.width,
+        canvas.height
     );
 
-    ctx.fill();
+    // GAME OVER
+    ctx.textAlign = "center";
 
-    // Leaf vein
-    ctx.strokeStyle = "#18a85a";
-    ctx.lineWidth = 1;
+    ctx.shadowColor = "#ff3366";
+    ctx.shadowBlur = 25;
 
-    ctx.beginPath();
+    ctx.fillStyle = "#ff4d6d";
 
-    ctx.moveTo(
-        centerX + 3,
-        centerY - 8
+    ctx.font = "bold 56px Arial";
+
+    ctx.fillText(
+        "GAME OVER",
+        canvas.width / 2,
+        canvas.height / 2 - 50
     );
 
-    ctx.lineTo(
-        centerX + 7,
-        centerY - 8
+    ctx.shadowBlur = 0;
+
+    // Score
+    ctx.fillStyle = "#ffffff";
+
+    ctx.font = "bold 24px Arial";
+
+    ctx.fillText(
+        "Score: " + score,
+        canvas.width / 2,
+        canvas.height / 2
     );
 
-    ctx.stroke();
+    // Level
+    ctx.fillStyle = "#67e8f9";
+
+    ctx.font = "18px Arial";
+
+    ctx.fillText(
+        "Level: " + level,
+        canvas.width / 2,
+        canvas.height / 2 + 35
+    );
+
+    // Restart instruction
+    ctx.fillStyle = "#cbd5e1";
+
+    ctx.font = "16px Arial";
+
+    ctx.fillText(
+        "Click Restart or Play Again",
+        canvas.width / 2,
+        canvas.height / 2 + 75
+    );
 }
 
 
@@ -504,7 +461,7 @@ function drawFood() {
 function drawGame() {
 
     // Background
-    ctx.fillStyle = "#08001a";
+    ctx.fillStyle = "#020617";
 
     ctx.fillRect(
         0,
@@ -526,7 +483,11 @@ function drawGame() {
         ctx.beginPath();
 
         ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
+
+        ctx.lineTo(
+            x,
+            canvas.height
+        );
 
         ctx.stroke();
     }
@@ -540,31 +501,35 @@ function drawGame() {
         ctx.beginPath();
 
         ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
+
+        ctx.lineTo(
+            canvas.width,
+            y
+        );
 
         ctx.stroke();
     }
 
     // Food
-    drawFood();
+    if (food) {
+        drawFood();
+    }
 
     // Snake
-    snake.forEach((part, index) => {
+    snake.forEach(function(part, index) {
 
         if (index === 0) {
-
             drawSnakeHead(part);
-
         } else {
-
-            drawSnakeBody(part, index);
+            drawSnakeBody(part);
         }
+
     });
 
-    // Pause overlay
-    if (gamePaused) {
+    // Pause screen
+    if (gamePaused && !gameOver) {
 
-        ctx.fillStyle = "rgba(0,0,0,0.55)";
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
 
         ctx.fillRect(
             0,
@@ -573,25 +538,134 @@ function drawGame() {
             canvas.height
         );
 
-        ctx.fillStyle = "#ffffff";
-
-        ctx.font = "bold 42px Arial";
+        ctx.fillStyle = "white";
 
         ctx.textAlign = "center";
+
+        ctx.font = "bold 42px Arial";
 
         ctx.fillText(
             "PAUSED",
             canvas.width / 2,
             canvas.height / 2
         );
+    }
 
-        ctx.font = "18px Arial";
+    // Game over screen
+    if (gameOver) {
+        drawGameOver();
+    }
+}
 
-        ctx.fillText(
-            "Press Space or Resume",
-            canvas.width / 2,
-            canvas.height / 2 + 35
+
+// ==========================================
+// LEVEL TRANSITION
+// ==========================================
+
+function showLevelTransition(newLevel) {
+
+    levelTransition = true;
+
+    clearInterval(gameLoop);
+
+    const overlay = document.createElement("div");
+
+    overlay.style.position = "fixed";
+    overlay.style.left = "0";
+    overlay.style.top = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+
+    overlay.style.background =
+        "rgba(2, 6, 23, 0.88)";
+
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+
+    overlay.style.zIndex = "9999";
+
+    overlay.innerHTML = `
+        <div style="
+            text-align:center;
+            padding:40px;
+            background:#081428;
+            border:2px solid #22d3ee;
+            border-radius:24px;
+            box-shadow:0 0 30px rgba(34,211,238,0.4);
+        ">
+
+            <div style="
+                font-size:45px;
+                margin-bottom:10px;
+            ">
+                🚀
+            </div>
+
+            <h2 style="
+                margin:0;
+                font-size:50px;
+                color:#4ade80;
+            ">
+                LEVEL ${newLevel}
+            </h2>
+
+            <p style="
+                color:#cbd5e1;
+                font-size:18px;
+                margin-top:12px;
+            ">
+                Speed is increasing!
+            </p>
+
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    transitionTimer = setTimeout(function() {
+
+        overlay.remove();
+
+        levelTransition = false;
+
+        gameLoop = setInterval(
+            updateGame,
+            getCurrentSpeed()
         );
+
+        drawGame();
+
+    }, 1600);
+}
+
+
+// ==========================================
+// CHECK LEVEL
+// ==========================================
+
+function checkLevelProgression() {
+
+    let newLevel = level;
+
+    if (score >= 20) {
+        newLevel = 4;
+    } else if (score >= 10) {
+        newLevel = 3;
+    } else if (score >= 5) {
+        newLevel = 2;
+    }
+
+    if (
+        newLevel > level &&
+        !levelTransition
+    ) {
+
+        level = newLevel;
+
+        levelDisplay.textContent = level;
+
+        showLevelTransition(level);
     }
 }
 
@@ -602,7 +676,12 @@ function drawGame() {
 
 function updateGame() {
 
-    if (!gameRunning || gamePaused) {
+    if (
+        !gameRunning ||
+        gamePaused ||
+        gameOver ||
+        levelTransition
+    ) {
         return;
     }
 
@@ -652,12 +731,12 @@ function updateGame() {
 
         scoreDisplay.textContent = score;
 
-        // High score
         if (score > highScore) {
 
             highScore = score;
 
-            highScoreDisplay.textContent = highScore;
+            highScoreDisplay.textContent =
+                highScore;
 
             localStorage.setItem(
                 "snakeHighScore",
@@ -667,7 +746,7 @@ function updateGame() {
 
         createFood();
 
-        increaseDifficulty();
+        checkLevelProgression();
 
     } else {
 
@@ -679,70 +758,25 @@ function updateGame() {
 
 
 // ==========================================
-// INCREASE DIFFICULTY
-// ==========================================
-
-function increaseDifficulty() {
-
-    let newSpeed;
-    let newLevel;
-
-    if (score < 5) {
-
-        newSpeed = 120;
-        newLevel = 1;
-
-    } else if (score < 10) {
-
-        newSpeed = 95;
-        newLevel = 2;
-
-    } else if (score < 20) {
-
-        newSpeed = 75;
-        newLevel = 3;
-
-    } else {
-
-        newSpeed = 55;
-        newLevel = 4;
-    }
-
-    if (newLevel !== level) {
-
-        level = newLevel;
-
-        levelDisplay.textContent = level;
-    }
-
-    if (newSpeed !== speed) {
-
-        speed = newSpeed;
-
-        clearInterval(gameLoop);
-
-        gameLoop = setInterval(
-            updateGame,
-            speed
-        );
-    }
-}
-
-
-// ==========================================
 // GAME OVER
 // ==========================================
 
 function endGame() {
 
     gameRunning = false;
+    gamePaused = false;
+    gameOver = true;
+    levelTransition = false;
 
     clearInterval(gameLoop);
+    clearTimeout(transitionTimer);
 
     finalScore.textContent = score;
 
-    gameOverScreen.style.display = "block";
+    // Hide old game-over box
+    gameOverScreen.style.display = "none";
 
+    // Send score to backend
     fetch("http://localhost:3000/score", {
 
         method: "POST",
@@ -752,14 +786,16 @@ function endGame() {
         },
 
         body: JSON.stringify({
+            name: "Player",
             score: score,
             level: level
         })
 
     })
-    .then(response => response.json())
-
-    .then(data => {
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
 
         console.log(
             "Backend response:",
@@ -767,24 +803,31 @@ function endGame() {
         );
 
     })
+    .catch(function(error) {
 
-    .catch(error => {
-
-        console.error(
+        console.log(
             "Backend error:",
             error
         );
+
     });
+
+    // Show GAME OVER on canvas
+    drawGame();
 }
 
 
 // ==========================================
-// PAUSE / RESUME
+// PAUSE
 // ==========================================
 
 function togglePause() {
 
-    if (!gameRunning) {
+    if (
+        !gameRunning ||
+        gameOver ||
+        levelTransition
+    ) {
         return;
     }
 
@@ -792,11 +835,11 @@ function togglePause() {
 
     if (gamePaused) {
 
-        pauseBtn.textContent = "Resume";
+        pauseBtn.textContent = "▶ Resume";
 
     } else {
 
-        pauseBtn.textContent = "Pause";
+        pauseBtn.textContent = "⏸ Pause";
     }
 
     drawGame();
@@ -810,6 +853,7 @@ function togglePause() {
 function restartGame() {
 
     clearInterval(gameLoop);
+    clearTimeout(transitionTimer);
 
     startGame();
 }
@@ -819,86 +863,75 @@ function restartGame() {
 // KEYBOARD CONTROLS
 // ==========================================
 
-document.addEventListener(
-    "keydown",
-    function(event) {
+document.addEventListener("keydown", function(event) {
 
-        if (!gameRunning) {
-            return;
-        }
-
-        switch (event.key) {
-
-            case "ArrowUp":
-
-                if (direction.y !== 1) {
-
-                    nextDirection = {
-                        x: 0,
-                        y: -1
-                    };
-                }
-
-                event.preventDefault();
-
-                break;
-
-
-            case "ArrowDown":
-
-                if (direction.y !== -1) {
-
-                    nextDirection = {
-                        x: 0,
-                        y: 1
-                    };
-                }
-
-                event.preventDefault();
-
-                break;
-
-
-            case "ArrowLeft":
-
-                if (direction.x !== 1) {
-
-                    nextDirection = {
-                        x: -1,
-                        y: 0
-                    };
-                }
-
-                event.preventDefault();
-
-                break;
-
-
-            case "ArrowRight":
-
-                if (direction.x !== -1) {
-
-                    nextDirection = {
-                        x: 1,
-                        y: 0
-                    };
-                }
-
-                event.preventDefault();
-
-                break;
-
-
-            case " ":
-
-                togglePause();
-
-                event.preventDefault();
-
-                break;
-        }
+    if (
+        !gameRunning ||
+        gameOver ||
+        levelTransition
+    ) {
+        return;
     }
-);
+
+    if (event.key === "ArrowUp") {
+
+        if (direction.y !== 1) {
+
+            nextDirection = {
+                x: 0,
+                y: -1
+            };
+        }
+
+        event.preventDefault();
+    }
+
+    else if (event.key === "ArrowDown") {
+
+        if (direction.y !== -1) {
+
+            nextDirection = {
+                x: 0,
+                y: 1
+            };
+        }
+
+        event.preventDefault();
+    }
+
+    else if (event.key === "ArrowLeft") {
+
+        if (direction.x !== 1) {
+
+            nextDirection = {
+                x: -1,
+                y: 0
+            };
+        }
+
+        event.preventDefault();
+    }
+
+    else if (event.key === "ArrowRight") {
+
+        if (direction.x !== -1) {
+
+            nextDirection = {
+                x: 1,
+                y: 0
+            };
+        }
+
+        event.preventDefault();
+    }
+
+    else if (event.key === " ") {
+
+        togglePause();
+
+        event.preventDefault();
+    }
+});
 
 
 // ==========================================
@@ -925,12 +958,33 @@ gameOverRestart.addEventListener(
     restartGame
 );
 
+easyBtn.addEventListener(
+    "click",
+    function() {
+        selectDifficulty("easy");
+    }
+);
+
+mediumBtn.addEventListener(
+    "click",
+    function() {
+        selectDifficulty("medium");
+    }
+);
+
+hardBtn.addEventListener(
+    "click",
+    function() {
+        selectDifficulty("hard");
+    }
+);
+
 
 // ==========================================
 // INITIAL SCREEN
 // ==========================================
 
-ctx.fillStyle = "#08001a";
+ctx.fillStyle = "#020617";
 
 ctx.fillRect(
     0,
@@ -941,7 +995,7 @@ ctx.fillRect(
 
 ctx.fillStyle = "#ffffff";
 
-ctx.font = "bold 28px Arial";
+ctx.font = "bold 26px Arial";
 
 ctx.textAlign = "center";
 
