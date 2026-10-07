@@ -3,6 +3,7 @@ const ctx = canvas.getContext("2d");
 
 const scoreDisplay = document.getElementById("score");
 const highScoreDisplay = document.getElementById("highScore");
+const levelDisplay = document.getElementById("level");
 
 const startBtn = document.getElementById("startBtn");
 const pauseBtn = document.getElementById("pauseBtn");
@@ -17,22 +18,31 @@ const tileCount = canvas.width / gridSize;
 
 let snake;
 let food;
+
 let direction;
 let nextDirection;
 
 let score = 0;
-let highScore = Number(localStorage.getItem("snakeHighScore")) || 0;
+let level = 1;
+
+let highScore =
+    Number(localStorage.getItem("snakeHighScore")) || 0;
 
 let gameRunning = false;
 let gamePaused = false;
+
 let gameLoop;
 
 let speed = 120;
 
 highScoreDisplay.textContent = highScore;
+levelDisplay.textContent = level;
 
 
-// Start the game
+// ================================
+// START GAME
+// ================================
+
 function startGame() {
 
     snake = [
@@ -41,29 +51,44 @@ function startGame() {
         { x: 8, y: 10 }
     ];
 
-    direction = { x: 1, y: 0 };
-    nextDirection = { x: 1, y: 0 };
+    direction = {
+        x: 1,
+        y: 0
+    };
+
+    nextDirection = {
+        x: 1,
+        y: 0
+    };
 
     score = 0;
+    level = 1;
     speed = 120;
 
     scoreDisplay.textContent = score;
+    levelDisplay.textContent = level;
 
     gameOverScreen.style.display = "none";
-
-    createFood();
 
     gameRunning = true;
     gamePaused = false;
 
     pauseBtn.textContent = "Pause";
 
+    createFood();
+
     clearInterval(gameLoop);
+
     gameLoop = setInterval(updateGame, speed);
+
+    drawGame();
 }
 
 
-// Create food at random position
+// ================================
+// CREATE FOOD
+// ================================
+
 function createFood() {
 
     food = {
@@ -71,9 +96,12 @@ function createFood() {
         y: Math.floor(Math.random() * tileCount)
     };
 
-    // Make sure food does not appear inside snake
     for (let part of snake) {
-        if (part.x === food.x && part.y === food.y) {
+
+        if (
+            part.x === food.x &&
+            part.y === food.y
+        ) {
             createFood();
             return;
         }
@@ -81,17 +109,28 @@ function createFood() {
 }
 
 
-// Draw the game
+// ================================
+// DRAW GAME
+// ================================
+
 function drawGame() {
 
     // Clear canvas
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#000000";
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
 
     // Draw food
     ctx.fillStyle = "#ef4444";
 
     ctx.beginPath();
+
     ctx.arc(
         food.x * gridSize + gridSize / 2,
         food.y * gridSize + gridSize / 2,
@@ -99,6 +138,7 @@ function drawGame() {
         0,
         Math.PI * 2
     );
+
     ctx.fill();
 
 
@@ -121,7 +161,10 @@ function drawGame() {
 }
 
 
-// Update game
+// ================================
+// UPDATE GAME
+// ================================
+
 function updateGame() {
 
     if (!gameRunning || gamePaused) {
@@ -130,31 +173,34 @@ function updateGame() {
 
     direction = nextDirection;
 
+
     const head = {
         x: snake[0].x + direction.x,
         y: snake[0].y + direction.y
     };
 
 
-    // Check wall collision
+    // Wall collision
     if (
         head.x < 0 ||
         head.x >= tileCount ||
         head.y < 0 ||
         head.y >= tileCount
     ) {
+
         endGame();
         return;
     }
 
 
-    // Check self collision
+    // Self collision
     for (let part of snake) {
 
         if (
             head.x === part.x &&
             head.y === part.y
         ) {
+
             endGame();
             return;
         }
@@ -165,7 +211,7 @@ function updateGame() {
     snake.unshift(head);
 
 
-    // Check food
+    // Food collision
     if (
         head.x === food.x &&
         head.y === food.y
@@ -175,12 +221,14 @@ function updateGame() {
 
         scoreDisplay.textContent = score;
 
-        // Update high score
+
+        // High score
         if (score > highScore) {
 
             highScore = score;
 
-            highScoreDisplay.textContent = highScore;
+            highScoreDisplay.textContent =
+                highScore;
 
             localStorage.setItem(
                 "snakeHighScore",
@@ -188,14 +236,14 @@ function updateGame() {
             );
         }
 
+
         createFood();
 
-        // Increase difficulty
         increaseDifficulty();
 
     } else {
 
-        // Remove tail if food wasn't eaten
+        // Remove tail
         snake.pop();
     }
 
@@ -204,33 +252,64 @@ function updateGame() {
 }
 
 
-// Increase game speed as score increases
+// ================================
+// DIFFICULTY SYSTEM
+// ================================
+
 function increaseDifficulty() {
 
     let newSpeed;
+    let newLevel;
+
 
     if (score < 5) {
+
         newSpeed = 120;
+        newLevel = 1;
+
     } else if (score < 10) {
+
         newSpeed = 95;
+        newLevel = 2;
+
     } else if (score < 20) {
+
         newSpeed = 75;
+        newLevel = 3;
+
     } else {
+
         newSpeed = 55;
+        newLevel = 4;
     }
 
+
+    // Update level
+    if (newLevel !== level) {
+
+        level = newLevel;
+
+        levelDisplay.textContent = level;
+    }
+
+
+    // Update speed
     if (newSpeed !== speed) {
 
         speed = newSpeed;
 
         clearInterval(gameLoop);
 
-        gameLoop = setInterval(updateGame, speed);
+        gameLoop =
+            setInterval(updateGame, speed);
     }
 }
 
 
-// Game over
+// ================================
+// GAME OVER
+// ================================
+
 function endGame() {
 
     gameRunning = false;
@@ -243,7 +322,10 @@ function endGame() {
 }
 
 
-// Pause / Resume
+// ================================
+// PAUSE / RESUME
+// ================================
+
 function togglePause() {
 
     if (!gameRunning) {
@@ -252,12 +334,22 @@ function togglePause() {
 
     gamePaused = !gamePaused;
 
-    pauseBtn.textContent =
-        gamePaused ? "Resume" : "Pause";
+
+    if (gamePaused) {
+
+        pauseBtn.textContent = "Resume";
+
+    } else {
+
+        pauseBtn.textContent = "Pause";
+    }
 }
 
 
-// Restart
+// ================================
+// RESTART
+// ================================
+
 function restartGame() {
 
     clearInterval(gameLoop);
@@ -266,81 +358,136 @@ function restartGame() {
 }
 
 
-// Keyboard controls
-document.addEventListener("keydown", function(event) {
+// ================================
+// KEYBOARD CONTROLS
+// ================================
 
-    if (!gameRunning) {
-        return;
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (!gameRunning) {
+            return;
+        }
+
+
+        switch (event.key) {
+
+            case "ArrowUp":
+
+                if (direction.y !== 1) {
+
+                    nextDirection = {
+                        x: 0,
+                        y: -1
+                    };
+                }
+
+                event.preventDefault();
+
+                break;
+
+
+            case "ArrowDown":
+
+                if (direction.y !== -1) {
+
+                    nextDirection = {
+                        x: 0,
+                        y: 1
+                    };
+                }
+
+                event.preventDefault();
+
+                break;
+
+
+            case "ArrowLeft":
+
+                if (direction.x !== 1) {
+
+                    nextDirection = {
+                        x: -1,
+                        y: 0
+                    };
+                }
+
+                event.preventDefault();
+
+                break;
+
+
+            case "ArrowRight":
+
+                if (direction.x !== -1) {
+
+                    nextDirection = {
+                        x: 1,
+                        y: 0
+                    };
+                }
+
+                event.preventDefault();
+
+                break;
+
+
+            case " ":
+
+                togglePause();
+
+                event.preventDefault();
+
+                break;
+        }
+
     }
-
-    switch (event.key) {
-
-        case "ArrowUp":
-
-            if (direction.y !== 1) {
-                nextDirection = { x: 0, y: -1 };
-            }
-
-            event.preventDefault();
-            break;
+);
 
 
-        case "ArrowDown":
+// ================================
+// BUTTON EVENTS
+// ================================
 
-            if (direction.y !== -1) {
-                nextDirection = { x: 0, y: 1 };
-            }
+startBtn.addEventListener(
+    "click",
+    startGame
+);
 
-            event.preventDefault();
-            break;
+pauseBtn.addEventListener(
+    "click",
+    togglePause
+);
 
+restartBtn.addEventListener(
+    "click",
+    restartGame
+);
 
-        case "ArrowLeft":
-
-            if (direction.x !== 1) {
-                nextDirection = { x: -1, y: 0 };
-            }
-
-            event.preventDefault();
-            break;
-
-
-        case "ArrowRight":
-
-            if (direction.x !== -1) {
-                nextDirection = { x: 1, y: 0 };
-            }
-
-            event.preventDefault();
-            break;
+gameOverRestart.addEventListener(
+    "click",
+    restartGame
+);
 
 
-        case " ":
+// ================================
+// INITIAL SCREEN
+// ================================
 
-            togglePause();
-            event.preventDefault();
-            break;
-    }
+ctx.fillStyle = "#000000";
 
-});
-
-
-// Button events
-startBtn.addEventListener("click", startGame);
-
-pauseBtn.addEventListener("click", togglePause);
-
-restartBtn.addEventListener("click", restartGame);
-
-gameOverRestart.addEventListener("click", restartGame);
-
-
-// Initial screen
-ctx.fillStyle = "#000";
-ctx.fillRect(0, 0, canvas.width, canvas.height);
+ctx.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+);
 
 ctx.fillStyle = "#ffffff";
+
 ctx.font = "24px Arial";
+
 ctx.textAlign = "center";
 
 ctx.fillText(
