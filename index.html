@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Snake Evolution</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="game-container">
+
+        <h1>🐍 Snake Evolution</h1>
+
+        <div class="score-board">
+            Score: <span id="score">0</span>
+            &nbsp;&nbsp;|&nbsp;&nbsp;
+            High Score: <span id="highScore">0</span>
+        </div>
+
+        <canvas id="gameCanvas" width="600" height="600"></canvas>
+
+        <div class="buttons">
+            <button id="startBtn">Start Game</button>
+            <button id="pauseBtn">Pause</button>
+            <button id="restartBtn">Restart</button>
+        </div>
+
+        <div id="gameOver" class="game-over">
+            <h2>GAME OVER</h2>
+            <p>Your Score: <span id="finalScore">0</span></p>
+            <button id="gameOverRestart">Play Again</button>
+        </div>
+
+        <p class="instructions">
+            Use the Arrow Keys to move the snake.
+        </p>
+
+    </div>
+
+    <script src="game.js"></script>
+
+</body>
+</html>
