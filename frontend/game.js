@@ -1314,7 +1314,7 @@ function endGame() {
 
     // Send score to backend
     fetch(
-        "http://localhost:3000/score",
+        "https://snake-evolution-backend.vercel.app/score",
         {
             method: "POST",
 
