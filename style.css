@@ -1,68 +1,408 @@
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-    margin: 0;
     min-height: 100vh;
+
     font-family: Arial, sans-serif;
-    background: #111827;
-    color: white;
+
+    background:
+        radial-gradient(
+            circle at 15% 20%,
+            rgba(0, 220, 255, 0.18),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 85% 80%,
+            rgba(0, 255, 150, 0.14),
+            transparent 30%
+        ),
+        linear-gradient(
+            135deg,
+            #020617,
+            #07152f,
+            #031b2b
+        );
+
+    color: #ffffff;
+
     display: flex;
     justify-content: center;
     align-items: center;
+
+    padding: 25px;
 }
+
+
+/* =========================================
+   MAIN GAME CARD
+========================================= */
 
 .game-container {
+    width: 100%;
+    max-width: 850px;
+
+    padding: 30px;
+
     text-align: center;
-    padding: 20px;
+
+    background: rgba(8, 20, 40, 0.82);
+
+    border: 1px solid rgba(0, 220, 255, 0.35);
+
+    border-radius: 28px;
+
+    backdrop-filter: blur(18px);
+
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.55),
+        0 0 35px rgba(0, 200, 255, 0.12);
 }
+
+
+/* =========================================
+   SMALL TOP LABEL
+========================================= */
+
+.game-container::before {
+    content: "THE CLASSIC GAME • REIMAGINED";
+
+    display: block;
+
+    color: #7dd3fc;
+
+    font-size: 12px;
+
+    letter-spacing: 3px;
+
+    margin-bottom: 16px;
+
+    font-weight: bold;
+}
+
+
+/* =========================================
+   TITLE
+========================================= */
 
 h1 {
-    font-size: 42px;
-    margin-bottom: 15px;
+    font-size: 52px;
+
+    margin-bottom: 18px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #22d3ee,
+            #4ade80,
+            #a3e635
+        );
+
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+
+    text-shadow:
+        0 0 25px rgba(34, 211, 238, 0.18);
 }
 
+
+/* =========================================
+   SCORE BOARD
+========================================= */
+
 .score-board {
-    font-size: 22px;
-    margin-bottom: 15px;
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin-bottom: 22px;
+
+    font-size: 17px;
+
+    font-weight: bold;
+
+    color: #cbd5e1;
 }
+
+.score-board span {
+    display: inline-block;
+
+    min-width: 42px;
+
+    padding: 8px 13px;
+
+    border-radius: 10px;
+
+    background: rgba(15, 35, 60, 0.9);
+
+    border: 1px solid rgba(34, 211, 238, 0.25);
+
+    color: #67e8f9;
+
+    box-shadow:
+        0 0 12px rgba(34, 211, 238, 0.08);
+}
+
+
+/* =========================================
+   GAME CANVAS
+========================================= */
 
 canvas {
     display: block;
-    margin: auto;
-    background: #000;
-    border: 4px solid white;
-    border-radius: 8px;
+
+    width: 100%;
+
+    max-width: 600px;
+
+    height: auto;
+
+    margin: 0 auto 24px;
+
+    background: #020617;
+
+    border: 3px solid #22d3ee;
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 0 8px rgba(34, 211, 238, 0.8),
+        0 0 25px rgba(34, 211, 238, 0.25);
+
+    transition: box-shadow 0.3s ease;
 }
+
+canvas:hover {
+    box-shadow:
+        0 0 12px rgba(34, 211, 238, 0.9),
+        0 0 35px rgba(34, 211, 238, 0.3);
+}
+
+
+/* =========================================
+   BUTTON CONTAINER
+========================================= */
 
 .buttons {
-    margin-top: 20px;
+    display: flex;
+
+    justify-content: center;
+
+    flex-wrap: wrap;
+
+    gap: 12px;
 }
+
+
+/* =========================================
+   ALL BUTTONS
+========================================= */
 
 button {
-    padding: 12px 22px;
-    margin: 5px;
+    padding: 12px 24px;
+
     border: none;
-    border-radius: 8px;
-    font-size: 16px;
+
+    border-radius: 10px;
+
+    color: #ffffff;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
     cursor: pointer;
+
+    transition: all 0.2s ease;
+
+    box-shadow:
+        0 5px 15px rgba(0, 0, 0, 0.35);
 }
 
-button:hover {
-    transform: scale(1.05);
+
+/* START */
+
+#startBtn {
+    background:
+        linear-gradient(
+            135deg,
+            #10b981,
+            #22c55e
+        );
+
+    box-shadow:
+        0 0 15px rgba(34, 197, 94, 0.25);
 }
+
+
+/* PAUSE */
+
+#pauseBtn {
+    background:
+        linear-gradient(
+            135deg,
+            #0891b2,
+            #06b6d4
+        );
+
+    box-shadow:
+        0 0 15px rgba(6, 182, 212, 0.25);
+}
+
+
+/* RESTART */
+
+#restartBtn {
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #3b82f6
+        );
+
+    box-shadow:
+        0 0 15px rgba(59, 130, 246, 0.25);
+}
+
+
+/* GAME OVER RESTART */
+
+#gameOverRestart {
+    background:
+        linear-gradient(
+            135deg,
+            #ef4444,
+            #f97316
+        );
+
+    box-shadow:
+        0 0 15px rgba(239, 68, 68, 0.25);
+}
+
+
+/* =========================================
+   BUTTON HOVER
+========================================= */
+
+button:hover {
+    transform: translateY(-3px);
+
+    filter: brightness(1.12);
+
+    box-shadow:
+        0 8px 22px rgba(0, 0, 0, 0.4);
+}
+
+button:active {
+    transform: scale(0.96);
+}
+
+
+/* =========================================
+   GAME OVER
+========================================= */
 
 .game-over {
     display: none;
-    margin-top: 20px;
+
+    margin-top: 25px;
+
+    padding: 25px;
+
+    border-radius: 18px;
+
+    background:
+        rgba(15, 23, 42, 0.95);
+
+    border: 1px solid rgba(239, 68, 68, 0.5);
+
+    box-shadow:
+        0 0 25px rgba(239, 68, 68, 0.15);
 }
 
 .game-over h2 {
-    font-size: 32px;
+    font-size: 36px;
+
+    margin-bottom: 12px;
+
+    color: #f87171;
+
+    text-shadow:
+        0 0 15px rgba(248, 113, 113, 0.5);
 }
 
+.game-over p {
+    font-size: 20px;
+
+    margin-bottom: 15px;
+
+    color: #e2e8f0;
+}
+
+
+/* =========================================
+   INSTRUCTIONS
+========================================= */
+
 .instructions {
-    margin-top: 15px;
-    font-size: 16px;
+    margin-top: 20px;
+
+    color: #94a3b8;
+
+    font-size: 14px;
+}
+
+.instructions::before {
+    content: "🎮 ";
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 650px) {
+
+    body {
+        padding: 10px;
+    }
+
+    .game-container {
+        padding: 18px;
+
+        border-radius: 22px;
+    }
+
+    h1 {
+        font-size: 38px;
+    }
+
+    .game-container::before {
+        font-size: 9px;
+
+        letter-spacing: 2px;
+    }
+
+    .score-board {
+        font-size: 14px;
+    }
+
+    button {
+        padding: 11px 17px;
+
+        font-size: 14px;
+    }
+
+    canvas {
+        border-radius: 14px;
+    }
 }
