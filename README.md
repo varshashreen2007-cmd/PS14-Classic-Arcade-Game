@@ -13,9 +13,9 @@ The game combines the classic Snake gameplay with multiple difficulty levels, pr
 Develop a clone of a classic arcade game that provides an engaging and interactive gaming experience while demonstrating programming, frontend, backend, and game-development concepts.
 ---
 
-##  Our Solution
+## Our Solution
 
-We developed **Snake Evolution**, a browser-based Snake game where players control a growing snake, collect food, avoid obstacles, and progress through increasingly difficult levels.
+We developed **Snake Evolution**,a browser-based Snake game where players control a growing snake, collect food, avoid obstacles, and progress through increasingly difficult levels.
 
 The game includes:
 
@@ -30,7 +30,7 @@ The game includes:
 
 ---
 
-##  Features
+## Features
 
 ### Gameplay
 - Classic Snake movement
