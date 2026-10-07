@@ -1,6 +1,6 @@
-#  Snake Evolution
+# Snake Evolution
 
-## Classic Arcade Game Clone
+##Classic Arcade Game Clone
 
 Snake Evolution is a modern web-based version of the classic Snake arcade game, developed as part of our hackathon project for  
 
@@ -8,7 +8,7 @@ The game combines the classic Snake gameplay with multiple difficulty levels, pr
 
 ---
 
-##  Problem Statement
+## Problem Statement
 
 Develop a clone of a classic arcade game that provides an engaging and interactive gaming experience while demonstrating programming, frontend, backend, and game-development concepts.
 ---
@@ -41,7 +41,7 @@ The game includes:
 - Self-collision detection
 - Obstacle collision detection
 
-###  Difficulty Levels
+### Difficulty Levels
 
 | Difficulty | Speed |
 |---|---|
