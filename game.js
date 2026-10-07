@@ -22,13 +22,16 @@ const tileCount = canvas.width / gridSize;
 
 let snake = [];
 let food = null;
+let obstacles = [];
 
 let direction = { x: 1, y: 0 };
 let nextDirection = { x: 1, y: 0 };
 
 let score = 0;
 let level = 1;
-let highScore = Number(localStorage.getItem("snakeHighScore")) || 0;
+
+let highScore =
+    Number(localStorage.getItem("snakeHighScore")) || 0;
 
 let gameRunning = false;
 let gamePaused = false;
@@ -45,6 +48,215 @@ const difficultySettings = {
     medium: 120,
     hard: 90
 };
+
+
+// ==========================================
+// SOUND SYSTEM
+// ==========================================
+
+let audioContext = null;
+
+function initAudio() {
+
+    if (!audioContext) {
+
+        const AudioContext =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+        if (AudioContext) {
+            audioContext = new AudioContext();
+        }
+    }
+
+    if (
+        audioContext &&
+        audioContext.state === "suspended"
+    ) {
+        audioContext.resume();
+    }
+}
+
+
+function playTone(
+    frequency,
+    duration,
+    type = "square",
+    volume = 0.12
+) {
+
+    if (!audioContext) {
+        return;
+    }
+
+    const oscillator =
+        audioContext.createOscillator();
+
+    const gainNode =
+        audioContext.createGain();
+
+    oscillator.type = type;
+
+    oscillator.frequency.setValueAtTime(
+        frequency,
+        audioContext.currentTime
+    );
+
+    gainNode.gain.setValueAtTime(
+        volume,
+        audioContext.currentTime
+    );
+
+    gainNode.gain.exponentialRampToValueAtTime(
+        0.001,
+        audioContext.currentTime + duration
+    );
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.start();
+
+    oscillator.stop(
+        audioContext.currentTime + duration
+    );
+}
+
+
+function playEatSound() {
+
+    initAudio();
+
+    playTone(
+        750,
+        0.10,
+        "square",
+        0.12
+    );
+
+    setTimeout(function () {
+
+        playTone(
+            1000,
+            0.08,
+            "square",
+            0.10
+        );
+
+    }, 70);
+}
+
+
+function playLevelUpSound() {
+
+    initAudio();
+
+    playTone(
+        500,
+        0.12,
+        "square",
+        0.12
+    );
+
+    setTimeout(function () {
+
+        playTone(
+            700,
+            0.12,
+            "square",
+            0.12
+        );
+
+    }, 120);
+
+    setTimeout(function () {
+
+        playTone(
+            900,
+            0.18,
+            "square",
+            0.14
+        );
+
+    }, 240);
+}
+
+
+function playGameOverSound() {
+
+    initAudio();
+
+    playTone(
+        300,
+        0.18,
+        "sawtooth",
+        0.14
+    );
+
+    setTimeout(function () {
+
+        playTone(
+            200,
+            0.22,
+            "sawtooth",
+            0.14
+        );
+
+    }, 180);
+
+    setTimeout(function () {
+
+        playTone(
+            120,
+            0.35,
+            "sawtooth",
+            0.16
+        );
+
+    }, 400);
+}
+
+
+function playStartSound() {
+
+    initAudio();
+
+    playTone(
+        500,
+        0.08,
+        "square",
+        0.10
+    );
+
+    setTimeout(function () {
+
+        playTone(
+            750,
+            0.10,
+            "square",
+            0.12
+        );
+
+    }, 100);
+}
+
+
+function playPauseSound() {
+
+    initAudio();
+
+    playTone(
+        350,
+        0.10,
+        "triangle",
+        0.10
+    );
+}
+
+
+// ==========================================
+// INITIAL VALUES
+// ==========================================
 
 highScoreDisplay.textContent = highScore;
 levelDisplay.textContent = level;
@@ -86,7 +298,8 @@ function selectDifficulty(selectedDifficulty) {
 
 function getCurrentSpeed() {
 
-    const baseSpeed = difficultySettings[difficulty];
+    const baseSpeed =
+        difficultySettings[difficulty];
 
     if (level === 1) {
         return baseSpeed;
@@ -105,10 +318,189 @@ function getCurrentSpeed() {
 
 
 // ==========================================
+// OBSTACLE COUNT
+// ==========================================
+
+function getObstacleCount() {
+
+    if (level === 1) {
+        return 3;
+    }
+
+    if (level === 2) {
+        return 5;
+    }
+
+    if (level === 3) {
+        return 8;
+    }
+
+    return 11;
+}
+
+
+// ==========================================
+// CREATE OBSTACLES
+// ==========================================
+
+function createObstacles() {
+
+    obstacles = [];
+
+    const requiredCount =
+        getObstacleCount();
+
+    let attempts = 0;
+
+    while (
+        obstacles.length < requiredCount &&
+        attempts < 1000
+    ) {
+
+        attempts++;
+
+        const obstacle = {
+            x: Math.floor(Math.random() * tileCount),
+            y: Math.floor(Math.random() * tileCount)
+        };
+
+        // Keep starting area clear
+        if (
+            obstacle.x >= 6 &&
+            obstacle.x <= 11 &&
+            obstacle.y >= 8 &&
+            obstacle.y <= 12
+        ) {
+            continue;
+        }
+
+        // Don't overlap another obstacle
+        let overlapsObstacle = false;
+
+        for (let existing of obstacles) {
+
+            if (
+                existing.x === obstacle.x &&
+                existing.y === obstacle.y
+            ) {
+
+                overlapsObstacle = true;
+                break;
+            }
+        }
+
+        if (overlapsObstacle) {
+            continue;
+        }
+
+        // Don't place obstacle on food
+        if (
+            food &&
+            obstacle.x === food.x &&
+            obstacle.y === food.y
+        ) {
+            continue;
+        }
+
+        obstacles.push(obstacle);
+    }
+}
+
+
+// ==========================================
+// OBSTACLE COLLISION
+// ==========================================
+
+function checkObstacleCollision(head) {
+
+    for (let obstacle of obstacles) {
+
+        if (
+            head.x === obstacle.x &&
+            head.y === obstacle.y
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+// ==========================================
+// DRAW OBSTACLES
+// ==========================================
+
+function drawObstacles() {
+
+    for (let obstacle of obstacles) {
+
+        const x = obstacle.x * gridSize;
+        const y = obstacle.y * gridSize;
+
+        // Cyan glow
+        ctx.shadowColor = "#22d3ee";
+        ctx.shadowBlur = 12;
+
+        // Dark blue box
+        ctx.fillStyle = "#164e63";
+
+        ctx.fillRect(
+            x + 2,
+            y + 2,
+            gridSize - 4,
+            gridSize - 4
+        );
+
+        ctx.shadowBlur = 0;
+
+        // Cyan border
+        ctx.strokeStyle = "#22d3ee";
+        ctx.lineWidth = 2;
+
+        ctx.strokeRect(
+            x + 2,
+            y + 2,
+            gridSize - 4,
+            gridSize - 4
+        );
+
+        // Inner blue area
+        ctx.fillStyle = "#0e7490";
+
+        ctx.fillRect(
+            x + 5,
+            y + 5,
+            gridSize - 10,
+            gridSize - 10
+        );
+
+        // Warning symbol
+        ctx.fillStyle = "#facc15";
+
+        ctx.font = "bold 13px Arial";
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.fillText(
+            "⚠",
+            x + gridSize / 2,
+            y + gridSize / 2
+        );
+    }
+
+    ctx.textBaseline = "alphabetic";
+}
+
+
+// ==========================================
 // START GAME
 // ==========================================
 
 function startGame() {
+
+    initAudio();
 
     clearInterval(gameLoop);
     clearTimeout(transitionTimer);
@@ -120,8 +512,15 @@ function startGame() {
         { x: 7, y: 10 }
     ];
 
-    direction = { x: 1, y: 0 };
-    nextDirection = { x: 1, y: 0 };
+    direction = {
+        x: 1,
+        y: 0
+    };
+
+    nextDirection = {
+        x: 1,
+        y: 0
+    };
 
     score = 0;
     level = 1;
@@ -139,6 +538,9 @@ function startGame() {
     gameOverScreen.style.display = "none";
 
     createFood();
+    createObstacles();
+
+    playStartSound();
 
     gameLoop = setInterval(
         updateGame,
@@ -166,6 +568,19 @@ function createFood() {
             part.x === food.x &&
             part.y === food.y
         ) {
+
+            createFood();
+            return;
+        }
+    }
+
+    for (let obstacle of obstacles) {
+
+        if (
+            obstacle.x === food.x &&
+            obstacle.y === food.y
+        ) {
+
             createFood();
             return;
         }
@@ -177,7 +592,13 @@ function createFood() {
 // ROUNDED RECTANGLE
 // ==========================================
 
-function drawRoundedRect(x, y, width, height, radius) {
+function drawRoundedRect(
+    x,
+    y,
+    width,
+    height,
+    radius
+) {
 
     ctx.beginPath();
 
@@ -202,12 +623,13 @@ function drawSnakeHead(part) {
     const x = part.x * gridSize;
     const y = part.y * gridSize;
 
-    const gradient = ctx.createLinearGradient(
-        x,
-        y,
-        x + gridSize,
-        y + gridSize
-    );
+    const gradient =
+        ctx.createLinearGradient(
+            x,
+            y,
+            x + gridSize,
+            y + gridSize
+        );
 
     gradient.addColorStop(0, "#7cffb2");
     gradient.addColorStop(0.5, "#20e878");
@@ -233,43 +655,103 @@ function drawSnakeHead(part) {
 
     if (direction.x === 1) {
 
-        eye1 = { x: x + 14, y: y + 6 };
-        eye2 = { x: x + 14, y: y + 14 };
+        eye1 = {
+            x: x + 14,
+            y: y + 6
+        };
+
+        eye2 = {
+            x: x + 14,
+            y: y + 14
+        };
 
     } else if (direction.x === -1) {
 
-        eye1 = { x: x + 6, y: y + 6 };
-        eye2 = { x: x + 6, y: y + 14 };
+        eye1 = {
+            x: x + 6,
+            y: y + 6
+        };
+
+        eye2 = {
+            x: x + 6,
+            y: y + 14
+        };
 
     } else if (direction.y === -1) {
 
-        eye1 = { x: x + 6, y: y + 6 };
-        eye2 = { x: x + 14, y: y + 6 };
+        eye1 = {
+            x: x + 6,
+            y: y + 6
+        };
+
+        eye2 = {
+            x: x + 14,
+            y: y + 6
+        };
 
     } else {
 
-        eye1 = { x: x + 6, y: y + 14 };
-        eye2 = { x: x + 14, y: y + 14 };
+        eye1 = {
+            x: x + 6,
+            y: y + 14
+        };
+
+        eye2 = {
+            x: x + 14,
+            y: y + 14
+        };
     }
 
     ctx.fillStyle = "white";
 
     ctx.beginPath();
-    ctx.arc(eye1.x, eye1.y, 3, 0, Math.PI * 2);
+
+    ctx.arc(
+        eye1.x,
+        eye1.y,
+        3,
+        0,
+        Math.PI * 2
+    );
+
     ctx.fill();
 
     ctx.beginPath();
-    ctx.arc(eye2.x, eye2.y, 3, 0, Math.PI * 2);
+
+    ctx.arc(
+        eye2.x,
+        eye2.y,
+        3,
+        0,
+        Math.PI * 2
+    );
+
     ctx.fill();
 
     ctx.fillStyle = "#111827";
 
     ctx.beginPath();
-    ctx.arc(eye1.x, eye1.y, 1.5, 0, Math.PI * 2);
+
+    ctx.arc(
+        eye1.x,
+        eye1.y,
+        1.5,
+        0,
+        Math.PI * 2
+    );
+
     ctx.fill();
 
     ctx.beginPath();
-    ctx.arc(eye2.x, eye2.y, 1.5, 0, Math.PI * 2);
+
+    ctx.arc(
+        eye2.x,
+        eye2.y,
+        1.5,
+        0,
+        Math.PI * 2
+    );
+
     ctx.fill();
 }
 
@@ -283,19 +765,22 @@ function drawSnakeBody(part) {
     const x = part.x * gridSize;
     const y = part.y * gridSize;
 
-    const gradient = ctx.createLinearGradient(
-        x,
-        y,
-        x + gridSize,
-        y + gridSize
-    );
+    const gradient =
+        ctx.createLinearGradient(
+            x,
+            y,
+            x + gridSize,
+            y + gridSize
+        );
 
     gradient.addColorStop(0, "#45f58b");
     gradient.addColorStop(1, "#079447");
 
     ctx.fillStyle = gradient;
 
-    ctx.shadowColor = "rgba(0,255,120,0.45)";
+    ctx.shadowColor =
+        "rgba(0,255,120,0.45)";
+
     ctx.shadowBlur = 7;
 
     drawRoundedRect(
@@ -308,7 +793,8 @@ function drawSnakeBody(part) {
 
     ctx.shadowBlur = 0;
 
-    ctx.fillStyle = "rgba(255,255,255,0.18)";
+    ctx.fillStyle =
+        "rgba(255,255,255,0.18)";
 
     ctx.beginPath();
 
@@ -330,8 +816,13 @@ function drawSnakeBody(part) {
 
 function drawFood() {
 
-    const centerX = food.x * gridSize + gridSize / 2;
-    const centerY = food.y * gridSize + gridSize / 2;
+    const centerX =
+        food.x * gridSize +
+        gridSize / 2;
+
+    const centerY =
+        food.y * gridSize +
+        gridSize / 2;
 
     ctx.shadowColor = "#ff1744";
     ctx.shadowBlur = 18;
@@ -386,13 +877,13 @@ function drawFood() {
 
 
 // ==========================================
-// DRAW GAME OVER ON CANVAS
+// DRAW GAME OVER
 // ==========================================
 
 function drawGameOver() {
 
-    // Dark overlay
-    ctx.fillStyle = "rgba(0, 0, 0, 0.72)";
+    ctx.fillStyle =
+        "rgba(0, 0, 0, 0.72)";
 
     ctx.fillRect(
         0,
@@ -401,7 +892,6 @@ function drawGameOver() {
         canvas.height
     );
 
-    // GAME OVER
     ctx.textAlign = "center";
 
     ctx.shadowColor = "#ff3366";
@@ -419,7 +909,6 @@ function drawGameOver() {
 
     ctx.shadowBlur = 0;
 
-    // Score
     ctx.fillStyle = "#ffffff";
 
     ctx.font = "bold 24px Arial";
@@ -430,7 +919,6 @@ function drawGameOver() {
         canvas.height / 2
     );
 
-    // Level
     ctx.fillStyle = "#67e8f9";
 
     ctx.font = "18px Arial";
@@ -441,7 +929,6 @@ function drawGameOver() {
         canvas.height / 2 + 35
     );
 
-    // Restart instruction
     ctx.fillStyle = "#cbd5e1";
 
     ctx.font = "16px Arial";
@@ -471,7 +958,9 @@ function drawGame() {
     );
 
     // Grid
-    ctx.strokeStyle = "rgba(255,255,255,0.035)";
+    ctx.strokeStyle =
+        "rgba(255,255,255,0.035)";
+
     ctx.lineWidth = 1;
 
     for (
@@ -510,13 +999,16 @@ function drawGame() {
         ctx.stroke();
     }
 
+    // Obstacles
+    drawObstacles();
+
     // Food
     if (food) {
         drawFood();
     }
 
     // Snake
-    snake.forEach(function(part, index) {
+    snake.forEach(function (part, index) {
 
         if (index === 0) {
             drawSnakeHead(part);
@@ -529,7 +1021,8 @@ function drawGame() {
     // Pause screen
     if (gamePaused && !gameOver) {
 
-        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillStyle =
+            "rgba(0,0,0,0.6)";
 
         ctx.fillRect(
             0,
@@ -568,7 +1061,10 @@ function showLevelTransition(newLevel) {
 
     clearInterval(gameLoop);
 
-    const overlay = document.createElement("div");
+    playLevelUpSound();
+
+    const overlay =
+        document.createElement("div");
 
     overlay.style.position = "fixed";
     overlay.style.left = "0";
@@ -580,7 +1076,9 @@ function showLevelTransition(newLevel) {
         "rgba(2, 6, 23, 0.88)";
 
     overlay.style.display = "flex";
+
     overlay.style.alignItems = "center";
+
     overlay.style.justifyContent = "center";
 
     overlay.style.zIndex = "9999";
@@ -618,25 +1116,38 @@ function showLevelTransition(newLevel) {
                 Speed is increasing!
             </p>
 
+            <p style="
+                color:#22d3ee;
+                font-size:16px;
+                margin-top:8px;
+            ">
+                More obstacles ahead!
+            </p>
+
         </div>
     `;
 
     document.body.appendChild(overlay);
 
-    transitionTimer = setTimeout(function() {
+    transitionTimer =
+        setTimeout(function () {
 
-        overlay.remove();
+            overlay.remove();
 
-        levelTransition = false;
+            levelTransition = false;
 
-        gameLoop = setInterval(
-            updateGame,
-            getCurrentSpeed()
-        );
+            // Create more obstacles
+            createObstacles();
 
-        drawGame();
+            gameLoop =
+                setInterval(
+                    updateGame,
+                    getCurrentSpeed()
+                );
 
-    }, 1600);
+            drawGame();
+
+        }, 1600);
 }
 
 
@@ -649,10 +1160,15 @@ function checkLevelProgression() {
     let newLevel = level;
 
     if (score >= 20) {
+
         newLevel = 4;
+
     } else if (score >= 10) {
+
         newLevel = 3;
+
     } else if (score >= 5) {
+
         newLevel = 2;
     }
 
@@ -663,7 +1179,8 @@ function checkLevelProgression() {
 
         level = newLevel;
 
-        levelDisplay.textContent = level;
+        levelDisplay.textContent =
+            level;
 
         showLevelTransition(level);
     }
@@ -688,8 +1205,14 @@ function updateGame() {
     direction = nextDirection;
 
     const head = {
-        x: snake[0].x + direction.x,
-        y: snake[0].y + direction.y
+
+        x:
+            snake[0].x +
+            direction.x,
+
+        y:
+            snake[0].y +
+            direction.y
     };
 
     // Wall collision
@@ -719,6 +1242,14 @@ function updateGame() {
         }
     }
 
+    // Obstacle collision
+    if (checkObstacleCollision(head)) {
+
+        endGame();
+
+        return;
+    }
+
     snake.unshift(head);
 
     // Food collision
@@ -729,8 +1260,12 @@ function updateGame() {
 
         score++;
 
-        scoreDisplay.textContent = score;
+        scoreDisplay.textContent =
+            score;
 
+        playEatSound();
+
+        // High score
         if (score > highScore) {
 
             highScore = score;
@@ -773,29 +1308,32 @@ function endGame() {
 
     finalScore.textContent = score;
 
-    // Hide old game-over box
     gameOverScreen.style.display = "none";
 
+    playGameOverSound();
+
     // Send score to backend
-    fetch("http://localhost:3000/score", {
+    fetch(
+        "http://localhost:3000/score",
+        {
+            method: "POST",
 
-        method: "POST",
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
 
-        headers: {
-            "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-            name: "Player",
-            score: score,
-            level: level
-        })
-
-    })
-    .then(function(response) {
+            body: JSON.stringify({
+                name: "Player",
+                score: score,
+                level: level
+            })
+        }
+    )
+    .then(function (response) {
         return response.json();
     })
-    .then(function(data) {
+    .then(function (data) {
 
         console.log(
             "Backend response:",
@@ -803,7 +1341,7 @@ function endGame() {
         );
 
     })
-    .catch(function(error) {
+    .catch(function (error) {
 
         console.log(
             "Backend error:",
@@ -812,7 +1350,6 @@ function endGame() {
 
     });
 
-    // Show GAME OVER on canvas
     drawGame();
 }
 
@@ -835,12 +1372,16 @@ function togglePause() {
 
     if (gamePaused) {
 
-        pauseBtn.textContent = "▶ Resume";
+        pauseBtn.textContent =
+            "▶ Resume";
 
     } else {
 
-        pauseBtn.textContent = "⏸ Pause";
+        pauseBtn.textContent =
+            "⏸ Pause";
     }
+
+    playPauseSound();
 
     drawGame();
 }
@@ -863,75 +1404,89 @@ function restartGame() {
 // KEYBOARD CONTROLS
 // ==========================================
 
-document.addEventListener("keydown", function(event) {
+document.addEventListener(
+    "keydown",
+    function (event) {
 
-    if (
-        !gameRunning ||
-        gameOver ||
-        levelTransition
-    ) {
-        return;
-    }
-
-    if (event.key === "ArrowUp") {
-
-        if (direction.y !== 1) {
-
-            nextDirection = {
-                x: 0,
-                y: -1
-            };
+        if (
+            !gameRunning ||
+            gameOver ||
+            levelTransition
+        ) {
+            return;
         }
 
-        event.preventDefault();
-    }
+        if (event.key === "ArrowUp") {
 
-    else if (event.key === "ArrowDown") {
+            if (direction.y !== 1) {
 
-        if (direction.y !== -1) {
+                nextDirection = {
+                    x: 0,
+                    y: -1
+                };
+            }
 
-            nextDirection = {
-                x: 0,
-                y: 1
-            };
+            event.preventDefault();
+
         }
 
-        event.preventDefault();
-    }
+        else if (
+            event.key === "ArrowDown"
+        ) {
 
-    else if (event.key === "ArrowLeft") {
+            if (direction.y !== -1) {
 
-        if (direction.x !== 1) {
+                nextDirection = {
+                    x: 0,
+                    y: 1
+                };
+            }
 
-            nextDirection = {
-                x: -1,
-                y: 0
-            };
+            event.preventDefault();
+
         }
 
-        event.preventDefault();
-    }
+        else if (
+            event.key === "ArrowLeft"
+        ) {
 
-    else if (event.key === "ArrowRight") {
+            if (direction.x !== 1) {
 
-        if (direction.x !== -1) {
+                nextDirection = {
+                    x: -1,
+                    y: 0
+                };
+            }
 
-            nextDirection = {
-                x: 1,
-                y: 0
-            };
+            event.preventDefault();
+
         }
 
-        event.preventDefault();
+        else if (
+            event.key === "ArrowRight"
+        ) {
+
+            if (direction.x !== -1) {
+
+                nextDirection = {
+                    x: 1,
+                    y: 0
+                };
+            }
+
+            event.preventDefault();
+
+        }
+
+        else if (event.key === " ") {
+
+            togglePause();
+
+            event.preventDefault();
+
+        }
     }
-
-    else if (event.key === " ") {
-
-        togglePause();
-
-        event.preventDefault();
-    }
-});
+);
 
 
 // ==========================================
@@ -960,21 +1515,21 @@ gameOverRestart.addEventListener(
 
 easyBtn.addEventListener(
     "click",
-    function() {
+    function () {
         selectDifficulty("easy");
     }
 );
 
 mediumBtn.addEventListener(
     "click",
-    function() {
+    function () {
         selectDifficulty("medium");
     }
 );
 
 hardBtn.addEventListener(
     "click",
-    function() {
+    function () {
         selectDifficulty("hard");
     }
 );
@@ -995,7 +1550,8 @@ ctx.fillRect(
 
 ctx.fillStyle = "#ffffff";
 
-ctx.font = "bold 26px Arial";
+ctx.font =
+    "bold 26px Arial";
 
 ctx.textAlign = "center";
 
