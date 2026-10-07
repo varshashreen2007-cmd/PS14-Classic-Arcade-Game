@@ -56,7 +56,7 @@ The game becomes more challenging as the player's score increases.
 - Level 1 → 3 obstacles
 - Level 2 → 5 obstacles
 - Level 3 → 8 obstacles
-- Level 4 → 11 obstacles
+- Level 4 → 11 obstacles.
 
 ###  Sound Effects
 
