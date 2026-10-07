@@ -8,13 +8,13 @@ The game combines the classic Snake gameplay with multiple difficulty levels, pr
 
 ---
 
-## 🎯 Problem Statement
+##  Problem Statement
 
 Develop a clone of a classic arcade game that provides an engaging and interactive gaming experience while demonstrating programming, frontend, backend, and game-development concepts.
 
 ---
 
-## 💡 Our Solution
+##  Our Solution
 
 We developed **Snake Evolution**, a browser-based Snake game where players control a growing snake, collect food, avoid obstacles, and progress through increasingly difficult levels.
 
@@ -31,9 +31,9 @@ The game includes:
 
 ---
 
-## ✨ Features
+##  Features
 
-### 🎮 Gameplay
+### Gameplay
 - Classic Snake movement
 - Arrow-key controls
 - Food collection
@@ -42,7 +42,7 @@ The game includes:
 - Self-collision detection
 - Obstacle collision detection
 
-### ⚡ Difficulty Levels
+###  Difficulty Levels
 
 | Difficulty | Speed |
 |---|---|
@@ -50,7 +50,7 @@ The game includes:
 | 🟡 Medium | Moderate |
 | 🔴 Hard | Fast |
 
-### 🏆 Level Progression
+###  Level Progression
 
 The game becomes more challenging as the player's score increases.
 
@@ -59,7 +59,7 @@ The game becomes more challenging as the player's score increases.
 - Level 3 → 8 obstacles
 - Level 4 → 11 obstacles
 
-### 🔊 Sound Effects
+###  Sound Effects
 
 The game provides sound feedback for:
 
@@ -69,13 +69,13 @@ The game provides sound feedback for:
 - Pausing
 - Game over
 
-### 📊 Leaderboard
+###  Leaderboard
 
 Player scores can be submitted to the backend and the top 5 scores are maintained.
 
 ---
 
-## 🕹️ Controls
+##  Controls
 
 | Key | Action |
 |---|---|
@@ -109,7 +109,7 @@ Player scores can be submitted to the backend and the top 5 scores are maintaine
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 PS14-Classic-Arcade-Game/
